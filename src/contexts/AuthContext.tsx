@@ -5,11 +5,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
-interface Profile {
+export interface Profile {
   id: string;
   email: string;
   full_name?: string;
+  first_name?: string;
+  last_name?: string;
   user_role: 'admin' | 'student' | 'staff' | 'visitor';
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +21,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: Partial<Profile>) => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
@@ -44,12 +48,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          const { data: profile } = await supabase
+          const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
-          setProfile(profile);
+          
+          if (profileData) {
+            const typedProfile: Profile = {
+              id: profileData.id,
+              email: profileData.email,
+              full_name: profileData.first_name && profileData.last_name ? 
+                `${profileData.first_name} ${profileData.last_name}` : undefined,
+              first_name: profileData.first_name,
+              last_name: profileData.last_name,
+              user_role: profileData.user_role as 'admin' | 'student' | 'staff' | 'visitor',
+              avatar_url: profileData.avatar_url
+            };
+            setProfile(typedProfile);
+          }
         } else {
           setProfile(null);
         }
@@ -65,8 +82,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => {
-            setProfile(data);
+          .then(({ data: profileData }) => {
+            if (profileData) {
+              const typedProfile: Profile = {
+                id: profileData.id,
+                email: profileData.email,
+                full_name: profileData.first_name && profileData.last_name ? 
+                  `${profileData.first_name} ${profileData.last_name}` : undefined,
+                first_name: profileData.first_name,
+                last_name: profileData.last_name,
+                user_role: profileData.user_role as 'admin' | 'student' | 'staff' | 'visitor',
+                avatar_url: profileData.avatar_url
+              };
+              setProfile(typedProfile);
+            }
             setLoading(false);
           });
       } else {
@@ -78,6 +107,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, []);
+
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      // Calculate full_name if first_name or last_name is provided
+      const updateData: any = { ...data };
+      if (data.first_name || data.last_name) {
+        const firstName = data.first_name ?? profile?.first_name ?? '';
+        const lastName = data.last_name ?? profile?.last_name ?? '';
+        updateData.full_name = `${firstName} ${lastName}`.trim();
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      if (profile) {
+        setProfile({
+          ...profile,
+          ...data,
+          full_name: updateData.full_name || profile.full_name
+        });
+      }
+      
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Update error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     if (!email.endsWith('@ajmanuni.ac.ae')) {
@@ -121,6 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     login,
     logout,
+    updateProfile,
     isAuthenticated: !!user,
     isAdmin: profile?.user_role === 'admin',
   };

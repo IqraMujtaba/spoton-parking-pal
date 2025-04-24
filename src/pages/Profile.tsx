@@ -7,34 +7,26 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { User, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, updateProfile, isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: profile?.full_name?.split(' ')[0] || '',
-    last_name: profile?.full_name?.split(' ')[1] || '',
+    first_name: profile?.first_name || '',
+    last_name: profile?.last_name || '',
     email: profile?.email || '',
   });
   
-  const handleUpdateProfile = async () => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) return;
     
     try {
       setLoading(true);
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          full_name: `${formData.first_name} ${formData.last_name}`.trim(),
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      
-      toast.success('Profile updated successfully!');
+      await updateProfile({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+      });
     } catch (error: any) {
       console.error('Update error:', error);
       toast.error(error.message || 'Failed to update profile');
@@ -57,7 +49,7 @@ const Profile = () => {
             <CardDescription>Update your account details</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }}>
+            <form className="space-y-4" onSubmit={handleUpdateProfile}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -127,6 +119,9 @@ const Profile = () => {
                 <p className="text-sm text-yellow-800">
                   You have administrative privileges. Access the admin dashboard for additional controls.
                 </p>
+                <Button variant="default" className="mt-2 w-full" asChild>
+                  <a href="/admin">Admin Dashboard</a>
+                </Button>
               </div>
             )}
             
@@ -134,7 +129,10 @@ const Profile = () => {
               <Button
                 variant="destructive"
                 className="w-full"
-                onClick={() => { supabase.auth.signOut(); }}
+                onClick={() => { 
+                  const { auth } = supabase;
+                  auth.signOut();
+                }}
               >
                 Sign Out
               </Button>

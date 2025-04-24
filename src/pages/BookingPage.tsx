@@ -11,9 +11,14 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Clock, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { BuildingId, ParkingSpot, Booking } from '@/lib/types';
-import { getAvailableSpots, saveLocalBooking, getLocalBookings } from '@/lib/parking';
+import { BuildingId, ParkingSpot } from '@/lib/types';
 import { toast } from 'sonner';
+import { 
+  fetchBuildings, 
+  fetchParkingSpots, 
+  getAvailableSpots,
+  createBooking
+} from '@/services/supabaseService';
 
 const BookingPage = () => {
   const navigate = useNavigate();
@@ -25,14 +30,38 @@ const BookingPage = () => {
   const initialBuilding = searchParams.get('building') as BuildingId | null;
   
   // State variables
-  const [selectedBuilding, setSelectedBuilding] = useState<BuildingId | null>(
-    initialBuilding || null
-  );
+  const [buildings, setBuildings] = useState<any[]>([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<BuildingId | null>(initialBuilding || null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [startTime, setStartTime] = useState<string>('09:00');
   const [endTime, setEndTime] = useState<string>('10:00');
   const [parkingSpots, setParkingSpots] = useState<ParkingSpot[]>([]);
   const [selectedSpot, setSelectedSpot] = useState<ParkingSpot | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  // Get buildings on component mount
+  useEffect(() => {
+    const loadBuildings = async () => {
+      try {
+        const buildingsData = await fetchBuildings();
+        setBuildings(buildingsData);
+        
+        // If initialBuilding is set, find the corresponding building ID
+        if (initialBuilding) {
+          const building = buildingsData.find(b => b.code === initialBuilding);
+          if (building) {
+            setSelectedBuildingId(building.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading buildings:', error);
+        toast.error('Failed to load buildings');
+      }
+    };
+    
+    loadBuildings();
+  }, [initialBuilding]);
   
   // Generate time options
   const generateTimeOptions = () => {
@@ -51,20 +80,39 @@ const BookingPage = () => {
   
   // Update available spots when selection changes
   useEffect(() => {
-    if (selectedBuilding && selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      const allBookings = getLocalBookings();
-      const spots = getAvailableSpots(
-        selectedBuilding,
-        formattedDate,
-        startTime,
-        endTime,
-        allBookings
-      );
-      setParkingSpots(spots);
-      setSelectedSpot(null);
+    const updateAvailableSpots = async () => {
+      if (selectedBuildingId && selectedDate) {
+        try {
+          setLoading(true);
+          const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+          const spots = await getAvailableSpots(
+            selectedBuildingId,
+            formattedDate,
+            startTime,
+            endTime
+          );
+          setParkingSpots(spots);
+          setSelectedSpot(null);
+        } catch (error) {
+          console.error('Error getting available spots:', error);
+          toast.error('Failed to get available spots');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    updateAvailableSpots();
+  }, [selectedBuildingId, selectedDate, startTime, endTime]);
+  
+  // Handle building selection
+  const handleBuildingChange = (buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+    const selected = buildings.find(b => b.id === buildingId);
+    if (selected) {
+      setSelectedBuilding(selected.code as BuildingId);
     }
-  }, [selectedBuilding, selectedDate, startTime, endTime]);
+  };
   
   // Handle spot selection
   const handleSpotClick = (spot: ParkingSpot) => {
@@ -73,24 +121,28 @@ const BookingPage = () => {
   };
   
   // Handle booking submission
-  const handleBooking = () => {
-    if (!user || !selectedBuilding || !selectedSpot) return;
+  const handleBooking = async () => {
+    if (!user || !selectedBuildingId || !selectedSpot) return;
     
-    const newBooking: Booking = {
-      id: `booking-${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.id,
-      spotId: selectedSpot.id,
-      building: selectedBuilding,
-      spotNumber: selectedSpot.spotNumber,
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      startTime,
-      endTime,
-      createdAt: new Date().toISOString(),
-    };
-    
-    saveLocalBooking(newBooking);
-    toast.success('Parking spot booked successfully!');
-    navigate('/my-bookings');
+    try {
+      setLoading(true);
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      await createBooking(
+        user.id,
+        selectedSpot.id,
+        formattedDate,
+        startTime,
+        endTime
+      );
+      
+      toast.success('Parking spot booked successfully!');
+      navigate('/my-bookings');
+    } catch (error: any) {
+      console.error('Error booking spot:', error);
+      toast.error(error.message || 'Failed to book parking spot');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -107,16 +159,18 @@ const BookingPage = () => {
             <div className="space-y-2">
               <Label>Building</Label>
               <Select 
-                value={selectedBuilding || undefined}
-                onValueChange={(value) => setSelectedBuilding(value as BuildingId)}
+                value={selectedBuildingId || undefined}
+                onValueChange={handleBuildingChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Building" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="J2-A">J2-A</SelectItem>
-                  <SelectItem value="J2-B">J2-B</SelectItem>
-                  <SelectItem value="J2-C">J2-C</SelectItem>
+                  {buildings.map(building => (
+                    <SelectItem key={building.id} value={building.id}>
+                      {building.name} ({building.code})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -217,58 +271,79 @@ const BookingPage = () => {
       </Card>
       
       {/* Parking Map */}
-      {selectedBuilding && parkingSpots.length > 0 && (
+      {selectedBuildingId && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Select a Parking Spot</h2>
           
           <Card>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-5 gap-4 justify-center">
-                {/* Legend */}
-                <div className="col-span-5 flex items-center justify-center space-x-8 mb-4">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-spoton-accent rounded mr-2"></div>
-                    <span className="text-sm">Available</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-spoton-booked rounded mr-2"></div>
-                    <span className="text-sm">Booked</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-spoton-primary rounded mr-2"></div>
-                    <span className="text-sm">Selected</span>
-                  </div>
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-spoton-primary"></div>
                 </div>
-                
-                {/* Parking Spots */}
-                {parkingSpots.map((spot) => (
-                  <div
-                    key={spot.id}
-                    className={cn(
-                      "parking-spot aspect-square flex items-center justify-center rounded-md text-white font-semibold cursor-pointer",
-                      spot.isAvailable
-                        ? selectedSpot?.id === spot.id
-                          ? "bg-spoton-primary"
-                          : "bg-spoton-accent hover:bg-spoton-hover"
-                        : "bg-spoton-booked cursor-not-allowed opacity-70"
+              ) : (
+                <>
+                  <div className="grid grid-cols-5 gap-4 justify-center">
+                    {/* Legend */}
+                    <div className="col-span-5 flex items-center justify-center space-x-8 mb-4">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-spoton-accent rounded mr-2"></div>
+                        <span className="text-sm">Available</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-spoton-booked rounded mr-2"></div>
+                        <span className="text-sm">Booked</span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 bg-spoton-primary rounded mr-2"></div>
+                        <span className="text-sm">Selected</span>
+                      </div>
+                    </div>
+                    
+                    {/* Parking Spots */}
+                    {parkingSpots.length > 0 ? (
+                      parkingSpots.map((spot) => (
+                        <div
+                          key={spot.id}
+                          className={cn(
+                            "parking-spot aspect-square flex items-center justify-center rounded-md text-white font-semibold cursor-pointer",
+                            spot.isAvailable
+                              ? selectedSpot?.id === spot.id
+                                ? "bg-spoton-primary"
+                                : "bg-spoton-accent hover:bg-spoton-hover"
+                              : "bg-spoton-booked cursor-not-allowed opacity-70"
+                          )}
+                          onClick={() => handleSpotClick(spot)}
+                        >
+                          {spot.spot_number}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-5 text-center py-8 text-gray-500">
+                        No parking spots available. Please select a different building or time.
+                      </div>
                     )}
-                    onClick={() => handleSpotClick(spot)}
-                  >
-                    {spot.spotNumber}
                   </div>
-                ))}
-              </div>
-              
-              {/* Booking Button */}
-              <div className="mt-8 flex justify-center">
-                <Button
-                  size="lg"
-                  disabled={!selectedSpot}
-                  onClick={handleBooking}
-                >
-                  Book This Spot
-                </Button>
-              </div>
+                  
+                  {/* Booking Button */}
+                  <div className="mt-8 flex justify-center">
+                    <Button
+                      size="lg"
+                      disabled={!selectedSpot || loading}
+                      onClick={handleBooking}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          Processing...
+                        </>
+                      ) : (
+                        'Book This Spot'
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
