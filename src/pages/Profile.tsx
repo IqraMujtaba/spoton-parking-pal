@@ -6,16 +6,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import { User } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
-  const [fullName, setFullName] = useState(user?.full_name || '');
+  const { user, profile, isAdmin } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    first_name: profile?.full_name?.split(' ')[0] || '',
+    last_name: profile?.full_name?.split(' ')[1] || '',
+    email: profile?.email || '',
+  });
   
-  const handleUpdateProfile = () => {
-    // In a real app, this would update the user profile in Supabase
-    // For now, we'll just show a success message
-    toast.success('Profile updated successfully!');
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          full_name: `${formData.first_name} ${formData.last_name}`.trim(),
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Update error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -32,38 +57,54 @@ const Profile = () => {
             <CardDescription>Update your account details</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleUpdateProfile(); }}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  value={user?.email || ''}
+                  value={formData.email}
                   disabled
                 />
                 <p className="text-xs text-gray-500">Your email address cannot be changed</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  id="firstName"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="user-type">User Type</Label>
+                <Label htmlFor="user-type">User Role</Label>
                 <Input
                   id="user-type"
-                  value={user?.user_type || ''}
+                  value={profile?.user_role || ''}
                   disabled
                 />
               </div>
               
-              <Button type="button" onClick={handleUpdateProfile}>
-                Update Profile
+              <Button type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Profile'
+                )}
               </Button>
             </form>
           </CardContent>
@@ -81,27 +122,25 @@ const Profile = () => {
               </div>
             </div>
             
-            <p className="text-center text-sm text-gray-500">
-              In a real implementation, you would be able to upload a profile picture here.
-            </p>
+            {isAdmin && (
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  You have administrative privileges. Access the admin dashboard for additional controls.
+                </p>
+              </div>
+            )}
             
             <div className="pt-4">
               <Button
                 variant="destructive"
                 className="w-full"
-                onClick={logout}
+                onClick={() => { supabase.auth.signOut(); }}
               >
                 Sign Out
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-      
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>
-          This is a demo app. In a real implementation, this would connect to Supabase for user profile management.
-        </p>
       </div>
     </div>
   );

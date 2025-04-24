@@ -9,6 +9,158 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          entry_time: string | null
+          exit_time: string | null
+          fine_amount: number | null
+          id: string
+          qr_code: string | null
+          spot_id: string
+          start_time: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          entry_time?: string | null
+          exit_time?: string | null
+          fine_amount?: number | null
+          id?: string
+          qr_code?: string | null
+          spot_id: string
+          start_time: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          entry_time?: string | null
+          exit_time?: string | null
+          fine_amount?: number | null
+          id?: string
+          qr_code?: string | null
+          spot_id?: string
+          start_time?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_spot_id_fkey"
+            columns: ["spot_id"]
+            isOneToOne: false
+            referencedRelation: "parking_spots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buildings: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          location: string | null
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      parking_spots: {
+        Row: {
+          building_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          spot_number: number
+          spot_type_id: string
+        }
+        Insert: {
+          building_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          spot_number: number
+          spot_type_id: string
+        }
+        Update: {
+          building_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          spot_number?: number
+          spot_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parking_spots_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parking_spots_spot_type_id_fkey"
+            columns: ["spot_type_id"]
+            isOneToOne: false
+            referencedRelation: "spot_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -19,6 +171,7 @@ export type Database = {
           id: string
           last_name: string | null
           updated_at: string | null
+          user_role: string
           username: string | null
         }
         Insert: {
@@ -30,6 +183,7 @@ export type Database = {
           id: string
           last_name?: string | null
           updated_at?: string | null
+          user_role?: string
           username?: string | null
         }
         Update: {
@@ -41,7 +195,32 @@ export type Database = {
           id?: string
           last_name?: string | null
           updated_at?: string | null
+          user_role?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      spot_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_shaded: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_shaded?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_shaded?: boolean
+          name?: string
         }
         Relationships: []
       }
