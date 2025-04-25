@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b shadow-sm">
@@ -38,14 +38,16 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
         </div>
         
         <div className="ml-auto flex items-center gap-4">
-          {user ? (
+          {profile ? (
             <>
               <Link 
                 to="/profile"
                 className="flex items-center text-sm font-medium text-gray-700 hover:text-spoton-primary"
               >
                 <User className="h-4 w-4 mr-1" />
-                <span className="hidden md:inline">{user.full_name || user.email}</span>
+                <span className="hidden md:inline">
+                  {profile.full_name || profile.email}
+                </span>
               </Link>
               <Button variant="ghost" size="sm" onClick={logout}>
                 Logout

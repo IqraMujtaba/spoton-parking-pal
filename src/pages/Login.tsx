@@ -13,7 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   React.useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
@@ -47,7 +47,7 @@ const Login = () => {
           <Link to="/" className="text-3xl font-bold text-spoton-primary">
             Spot<span className="text-spoton-secondary">On</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Sign in to your account</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">Sign in</h2>
           <p className="mt-2 text-sm text-gray-600">
             Use your Ajman University email to access SpotOn
           </p>
@@ -100,12 +100,12 @@ const Login = () => {
           </form>
         </Card>
         
-        <div className="text-center text-sm">
-          <p className="text-gray-600">
-            This is a demo app. In a real implementation, this would connect to Supabase for authentication.
-          </p>
-          <p className="text-gray-600 mt-2">
-            Any email ending with @ajmanuni.ac.ae will work with any password.
+        <div className="text-center space-y-2">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-medium text-spoton-primary hover:text-spoton-secondary">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -20,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, userData: { first_name: string; last_name: string; user_role: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   isAuthenticated: boolean;
@@ -55,17 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
           
           if (profileData) {
-            const typedProfile: Profile = {
-              id: profileData.id,
-              email: profileData.email,
-              full_name: profileData.first_name && profileData.last_name ? 
-                `${profileData.first_name} ${profileData.last_name}` : undefined,
-              first_name: profileData.first_name,
-              last_name: profileData.last_name,
-              user_role: profileData.user_role as 'admin' | 'student' | 'staff' | 'visitor',
-              avatar_url: profileData.avatar_url
-            };
-            setProfile(typedProfile);
+            setProfile(profileData as Profile);
           }
         } else {
           setProfile(null);
@@ -84,17 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single()
           .then(({ data: profileData }) => {
             if (profileData) {
-              const typedProfile: Profile = {
-                id: profileData.id,
-                email: profileData.email,
-                full_name: profileData.first_name && profileData.last_name ? 
-                  `${profileData.first_name} ${profileData.last_name}` : undefined,
-                first_name: profileData.first_name,
-                last_name: profileData.last_name,
-                user_role: profileData.user_role as 'admin' | 'student' | 'staff' | 'visitor',
-                avatar_url: profileData.avatar_url
-              };
-              setProfile(typedProfile);
+              setProfile(profileData as Profile);
             }
             setLoading(false);
           });
@@ -107,6 +87,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Login successful');
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async (
+    email: string, 
+    password: string,
+    userData: { first_name: string; last_name: string; user_role: string }
+  ) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            user_role: userData.user_role
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Signup successful');
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast.error(error.message || 'Signup failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.info('Logged out successfully');
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
+  };
 
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) return;
@@ -147,47 +189,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, password: string) => {
-    if (!email.endsWith('@ajmanuni.ac.ae')) {
-      toast.error('Only emails from Ajman University are allowed');
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
-      
-      toast.success('Login successful');
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.info('Logged out successfully');
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Failed to log out');
-    }
-  };
-
   const value = {
     user,
     profile,
     loading,
     login,
+    signup,
     logout,
     updateProfile,
     isAuthenticated: !!user,

@@ -1,9 +1,10 @@
-
 export type BuildingId = 'J2-A' | 'J2-B' | 'J2-C';
 
 export type ParkingSpotType = 'Regular' | 'Shaded' | 'Disabled Access';
 
 export type BookingStatus = 'active' | 'completed' | 'cancelled' | 'expired' | 'fined';
+
+export type NotificationType = 'info' | 'warning' | 'fine' | 'alert';
 
 export interface ParkingSpot {
   id: string;
@@ -19,7 +20,11 @@ export interface ParkingSpot {
     name: ParkingSpotType;
     is_shaded: boolean;
   };
-  isAvailable?: boolean; // For client-side availability calculation
+  isAvailable?: boolean;
+}
+
+export interface BookingWithSpot extends Booking {
+  spot: ParkingSpot;
 }
 
 export interface Booking {
@@ -38,17 +43,13 @@ export interface Booking {
   fine_amount?: number;
 }
 
-export interface BookingWithSpot extends Booking {
-  spot: ParkingSpot;
-}
-
 export interface Notification {
   id: string;
   user_id: string;
   title: string;
   message: string;
   is_read: boolean;
-  type: 'info' | 'warning' | 'fine' | 'alert';
+  type: NotificationType;
   created_at: string;
 }
 
