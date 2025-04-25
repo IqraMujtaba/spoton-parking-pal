@@ -1,13 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 import { ParkingSpot } from '@/lib/types';
-import { Calendar, User as UserIcon, Car, CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, User as UserIcon, Car } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { getAllBookings, getDashboardStats } from '@/services/supabaseService';
 import { BookingWithSpot } from '@/lib/types';
 
@@ -46,17 +46,17 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  const handleDateChange = async (date: DateRange | undefined) => {
-    setDate(date);
+  const handleDateChange = async (newDate: DateRange | undefined) => {
+    setDate(newDate);
     
-    if (!date?.from) {
+    if (!newDate?.from) {
       // If no date is selected, fetch all active and completed bookings
       const bookingsData = await getAllBookings(['active', 'completed']);
       setBookings(bookingsData as BookingWithSpot[]);
       return;
     }
     
-    const formattedDate = date.from ? format(date.from, 'yyyy-MM-dd') : '';
+    const formattedDate = newDate.from ? format(newDate.from, 'yyyy-MM-dd') : '';
     
     try {
       const bookingsData = await getAllBookings(['active', 'completed'], formattedDate);
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
               mode="range"
               defaultMonth={date?.from}
               selected={date}
-              onSelect={(newDate) => handleDateChange(newDate)}
+              onSelect={handleDateChange}
               disabled={{ from: new Date(1900, 1, 1) }}
               numberOfMonths={2}
               pagedNavigation
