@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
-import { MapPin, Calendar, Clock, CheckSquare } from 'lucide-react';
+import { MapPin, Calendar, CheckSquare } from 'lucide-react';
 
 const Index = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -16,23 +17,22 @@ const Index = () => {
             Spot<span className="text-spoton-secondary">On</span>
           </h1>
           <div className="space-x-4">
-            {isAuthenticated ? (
+            {!loading && (
               <>
-                <Link to="/dashboard">
-                  <Button variant="outline" size="sm">Dashboard</Button>
-                </Link>
-                <Link to="/profile">
-                  <Button variant="outline" size="sm">Profile</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="outline" size="sm">Login</Button>
-                </Link>
-                <Link to="/signup">
-                  <Button variant="default" size="sm">Sign Up</Button>
-                </Link>
+                {isAuthenticated ? (
+                  <Link to="/dashboard">
+                    <Button variant="outline" size="sm">Dashboard</Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="outline" size="sm">Login</Button>
+                    </Link>
+                    <Link to="/signup">
+                      <Button variant="default" size="sm">Sign Up</Button>
+                    </Link>
+                  </>
+                )}
               </>
             )}
           </div>

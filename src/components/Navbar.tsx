@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white border-b shadow-sm">
@@ -25,20 +25,22 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
           </span>
         </Link>
         
-        <div className="hidden md:flex ml-6 space-x-4">
-          <Link to="/dashboard" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
-            Dashboard
-          </Link>
-          <Link to="/booking" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
-            Book a Spot
-          </Link>
-          <Link to="/my-bookings" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
-            My Bookings
-          </Link>
-        </div>
+        {isAuthenticated && (
+          <div className="hidden md:flex ml-6 space-x-4">
+            <Link to="/dashboard" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
+              Dashboard
+            </Link>
+            <Link to="/booking" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
+              Book a Spot
+            </Link>
+            <Link to="/my-bookings" className="text-sm font-medium text-gray-700 hover:text-spoton-primary">
+              My Bookings
+            </Link>
+          </div>
+        )}
         
         <div className="ml-auto flex items-center gap-4">
-          {profile ? (
+          {isAuthenticated ? (
             <>
               <Link 
                 to="/profile"
@@ -46,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
               >
                 <User className="h-4 w-4 mr-1" />
                 <span className="hidden md:inline">
-                  {profile.full_name || profile.email}
+                  {profile?.full_name || profile?.email}
                 </span>
               </Link>
               <Button variant="ghost" size="sm" onClick={logout}>
@@ -54,11 +56,18 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuToggle }) => {
               </Button>
             </>
           ) : (
-            <Link to="/login">
-              <Button variant="default" size="sm">
-                Login
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link to="/login">
+                <Button variant="outline" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button variant="default" size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       </div>
