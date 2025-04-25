@@ -1,3 +1,4 @@
+
 export type BuildingId = 'J2-A' | 'J2-B' | 'J2-C';
 
 export type ParkingSpotType = 'Regular' | 'Shaded' | 'Disabled Access';

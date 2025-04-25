@@ -8,8 +8,14 @@ export const generateParkingSpots = (buildingId: BuildingId): ParkingSpot[] => {
   for (let i = 1; i <= 40; i++) {
     spots.push({
       id: `${buildingId}-${i}`,
-      building: buildingId,
-      spotNumber: i,
+      building_id: buildingId,
+      spot_number: i,
+      is_active: true,
+      spot_type_id: 'regular',
+      building: {
+        code: buildingId,
+        name: `Building ${buildingId}`
+      },
       isAvailable: true
     });
   }
@@ -26,7 +32,7 @@ export const isSpotAvailable = (
   bookings: Booking[]
 ): boolean => {
   const relevantBookings = bookings.filter(
-    booking => booking.spotId === spotId && booking.date === date
+    booking => booking.spot_id === spotId && booking.date === date
   );
   
   if (relevantBookings.length === 0) return true;
@@ -35,8 +41,8 @@ export const isSpotAvailable = (
   const requestEnd = new Date(`${date}T${endTime}`);
   
   return !relevantBookings.some(booking => {
-    const bookingStart = new Date(`${booking.date}T${booking.startTime}`);
-    const bookingEnd = new Date(`${booking.date}T${booking.endTime}`);
+    const bookingStart = new Date(`${booking.date}T${booking.start_time}`);
+    const bookingEnd = new Date(`${booking.date}T${booking.end_time}`);
     
     // Check if there's any overlap between the requested time and the booking
     return (

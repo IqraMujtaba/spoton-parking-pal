@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,29 +30,26 @@ const MyBookings = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (!user) return;
-    
-    // Load bookings initially
-    const loadBookings = async () => {
+    const fetchBookings = async () => {
+      if (!user) return;
+      
       try {
         setLoading(true);
-        const userBookings = await getUserBookings(user.id);
-        setBookings(userBookings);
+        const data = await getUserBookings(user.id);
+        setBookings(data as BookingWithSpot[]);
       } catch (error) {
-        console.error('Error loading bookings:', error);
+        console.error('Error fetching bookings:', error);
         toast.error('Failed to load bookings');
       } finally {
         setLoading(false);
       }
     };
     
-    loadBookings();
+    fetchBookings();
     
-    // Subscribe to booking updates
     const subscribeToBookingUpdates = async () => {
       const subscription = await subscribeToBookings(user.id, () => {
-        // Reload bookings when changes occur
-        loadBookings();
+        fetchBookings();
       });
       
       return () => {
@@ -106,7 +102,6 @@ const MyBookings = () => {
     return !isAfter(endDateTime, new Date());
   };
   
-  // Group bookings into active and past
   const activeBookings = bookings.filter(booking => 
     !isPastBooking(booking) && booking.status === 'active'
   );
@@ -135,7 +130,6 @@ const MyBookings = () => {
         </Card>
       ) : bookings.length > 0 ? (
         <div className="space-y-6">
-          {/* Active Bookings */}
           {activeBookings.length > 0 && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Active Reservations</h2>
@@ -151,7 +145,6 @@ const MyBookings = () => {
             </div>
           )}
           
-          {/* Past Bookings */}
           {pastBookings.length > 0 && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Past Reservations</h2>
@@ -204,7 +197,6 @@ const MyBookings = () => {
   );
 };
 
-// Booking card component
 const BookingCard = ({ 
   booking, 
   onCancel 

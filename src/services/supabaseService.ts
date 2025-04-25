@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ParkingSpot, Booking, BookingStatus, Notification } from '@/lib/types';
+import { ParkingSpot, Booking, BookingStatus, Notification, BookingWithSpot } from '@/lib/types';
 import QRCode from 'qrcode';
 
 export async function fetchBuildings() {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { Booking } from '@/lib/types';
 import { Calendar, CheckSquare, MapPin } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
   const [buildingStats, setBuildingStats] = useState({
     'J2-A': { total: 40, available: 40 },
@@ -21,7 +20,7 @@ const Dashboard = () => {
     // Load user bookings
     if (user) {
       const allBookings = getLocalBookings();
-      const userBookings = allBookings.filter(booking => booking.userId === user.id);
+      const userBookings = allBookings.filter(booking => booking.user_id === user.id);
       setMyBookings(userBookings);
       
       // Calculate building stats
@@ -34,13 +33,14 @@ const Dashboard = () => {
       
       // Simple count of bookings per building
       const bookingsToday = allBookings.filter(
-        booking => booking.date === today && booking.startTime <= currentTime && booking.endTime >= currentTime
+        booking => booking.date === today && booking.start_time <= currentTime && booking.end_time >= currentTime
       );
       
+      // Using spot.building.code to determine the building
       const stats = {
-        'J2-A': { total: 40, available: 40 - bookingsToday.filter(b => b.building === 'J2-A').length },
-        'J2-B': { total: 40, available: 40 - bookingsToday.filter(b => b.building === 'J2-B').length },
-        'J2-C': { total: 40, available: 40 - bookingsToday.filter(b => b.building === 'J2-C').length }
+        'J2-A': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-A').length },
+        'J2-B': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-B').length },
+        'J2-C': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-C').length }
       };
       
       setBuildingStats(stats);
@@ -53,12 +53,12 @@ const Dashboard = () => {
     const now = new Date();
     const upcoming = myBookings
       .filter(booking => {
-        const bookingDateTime = new Date(`${booking.date}T${booking.startTime}`);
+        const bookingDateTime = new Date(`${booking.date}T${booking.start_time}`);
         return bookingDateTime > now;
       })
       .sort((a, b) => {
-        const dateTimeA = new Date(`${a.date}T${a.startTime}`);
-        const dateTimeB = new Date(`${b.date}T${b.startTime}`);
+        const dateTimeA = new Date(`${a.date}T${a.start_time}`);
+        const dateTimeB = new Date(`${b.date}T${b.start_time}`);
         return dateTimeA.getTime() - dateTimeB.getTime();
       });
     
@@ -81,7 +81,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-500">Welcome back, {user?.full_name || 'User'}</p>
+        <p className="text-gray-500">Welcome back, {profile?.full_name || 'User'}</p>
       </div>
       
       {/* Overview Cards */}
@@ -191,11 +191,11 @@ const Dashboard = () => {
               </div>
               <div className="flex items-center">
                 <MapPin className="h-5 w-5 mr-2 text-spoton-primary" />
-                <span>Building {upcomingBooking.building}, Spot {upcomingBooking.spotNumber}</span>
+                <span>Building {upcomingBooking.spot?.building?.code}, Spot {upcomingBooking.spot?.spot_number}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="h-5 w-5 mr-2 text-spoton-primary" />
-                <span>{upcomingBooking.startTime} - {upcomingBooking.endTime}</span>
+                <span>{upcomingBooking.start_time} - {upcomingBooking.end_time}</span>
               </div>
             </div>
           </CardContent>

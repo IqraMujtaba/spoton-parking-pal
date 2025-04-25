@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import BookingPage from "./pages/BookingPage";
 import MyBookings from "./pages/MyBookings";

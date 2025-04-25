@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Popover,
@@ -7,7 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
-import { Notification } from '@/lib/types';
+import { Notification, NotificationType } from '@/lib/types';
 import { getUserNotifications, markNotificationAsRead, subscribeToNotifications } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
@@ -28,7 +27,7 @@ export function NotificationsMenu() {
       try {
         setLoading(true);
         const data = await getUserNotifications(user.id);
-        setNotifications(data);
+        setNotifications(data as Notification[]);
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {
@@ -41,7 +40,7 @@ export function NotificationsMenu() {
     // Subscribe to new notifications
     const subscribeToNewNotifications = async () => {
       const subscription = await subscribeToNotifications(user.id, (newNotification) => {
-        setNotifications(prev => [newNotification, ...prev]);
+        setNotifications(prev => [newNotification as Notification, ...prev]);
       });
       
       return () => {
