@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
-import { ParkingSpot, Building, User } from '@/lib/types';
-import { Calendar, User as UserIcon, Car } from 'lucide-react';
+import { ParkingSpot } from '@/lib/types';
+import { Calendar, User as UserIcon, Car, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -100,10 +101,11 @@ const AdminDashboard = () => {
               mode="range"
               defaultMonth={date?.from}
               selected={date}
-              onSelect={handleDateChange}
+              onSelect={(newDate) => handleDateChange(newDate)}
               disabled={{ from: new Date(1900, 1, 1) }}
               numberOfMonths={2}
               pagedNavigation
+              className="pointer-events-auto"
             />
           </PopoverContent>
         </Popover>
