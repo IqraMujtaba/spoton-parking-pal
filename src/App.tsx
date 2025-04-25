@@ -19,8 +19,17 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ParkingManagement from "./pages/Admin/ParkingManagement";
 import UserManagement from "./pages/Admin/UserManagement";
 import NotFound from "./pages/NotFound";
+import { Suspense } from "react";
 
-const queryClient = new QueryClient();
+// Create a client with settings to improve performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,7 +45,11 @@ const App = () => (
             
             {/* User routes */}
             <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={
+                <Suspense fallback={<div className="p-8 flex justify-center"><div className="animate-spin h-10 w-10 border-t-2 border-b-2 border-spoton-primary rounded-full"></div></div>}>
+                  <Dashboard />
+                </Suspense>
+              } />
               <Route path="/booking" element={<BookingPage />} />
               <Route path="/my-bookings" element={<MyBookings />} />
               <Route path="/active-booking" element={<ActiveBooking />} />

@@ -1,247 +1,168 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getLocalBookings } from '@/lib/parking';
-import { Booking } from '@/lib/types';
-import { Calendar, CheckSquare, MapPin } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
-  const [myBookings, setMyBookings] = useState<Booking[]>([]);
-  const [buildingStats, setBuildingStats] = useState({
-    'J2-A': { total: 40, available: 40 },
-    'J2-B': { total: 40, available: 40 },
-    'J2-C': { total: 40, available: 40 }
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    availableSpots: 0,
+    activeBooking: null,
+    recentBookings: []
   });
 
   useEffect(() => {
-    // Load user bookings
-    if (user) {
-      const allBookings = getLocalBookings();
-      const userBookings = allBookings.filter(booking => booking.user_id === user.id);
-      setMyBookings(userBookings);
-      
-      // Calculate building stats
-      const today = new Date().toISOString().split('T')[0];
-      const currentTime = new Date().toLocaleTimeString('en-US', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit'
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setStats({
+        availableSpots: 45,
+        activeBooking: null,
+        recentBookings: []
       });
-      
-      // Simple count of bookings per building
-      const bookingsToday = allBookings.filter(
-        booking => booking.date === today && booking.start_time <= currentTime && booking.end_time >= currentTime
-      );
-      
-      // Using spot.building.code to determine the building
-      const stats = {
-        'J2-A': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-A').length },
-        'J2-B': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-B').length },
-        'J2-C': { total: 40, available: 40 - bookingsToday.filter(b => b.spot?.building?.code === 'J2-C').length }
-      };
-      
-      setBuildingStats(stats);
-    }
-  }, [user]);
+      setLoading(false);
+    }, 500); // Reduced timeout for better UX
 
-  const getUpcomingBooking = () => {
-    if (myBookings.length === 0) return null;
-    
-    const now = new Date();
-    const upcoming = myBookings
-      .filter(booking => {
-        const bookingDateTime = new Date(`${booking.date}T${booking.start_time}`);
-        return bookingDateTime > now;
-      })
-      .sort((a, b) => {
-        const dateTimeA = new Date(`${a.date}T${a.start_time}`);
-        const dateTimeB = new Date(`${b.date}T${b.start_time}`);
-        return dateTimeA.getTime() - dateTimeB.getTime();
-      });
-    
-    return upcoming[0] || null;
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  const upcomingBooking = getUpcomingBooking();
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-[250px]" />
+          <Skeleton className="h-10 w-[120px]" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-[180px] rounded-md" />
+          <Skeleton className="h-[180px] rounded-md" />
+          <Skeleton className="h-[180px] rounded-md" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-500">Welcome back, {profile?.full_name || 'User'}</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome, {profile?.first_name || 'User'}!</h1>
+          <p className="text-muted-foreground">
+            Manage your parking bookings and find available spots.
+          </p>
+        </div>
+
+        <Link to="/booking">
+          <Button size="sm">Book a Spot</Button>
+        </Link>
       </div>
-      
-      {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Available Spots</CardTitle>
-            <CardDescription>Current availability</CardDescription>
+            <CardDescription>Parking spots currently available</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-spoton-primary">
-              {buildingStats['J2-A'].available + buildingStats['J2-B'].available + buildingStats['J2-C'].available}
-              <span className="text-base font-normal text-gray-500"> / 120</span>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Link to="/booking">
-              <Button variant="outline" size="sm">Book Now</Button>
+            <div className="text-3xl font-bold text-spoton-primary">{stats.availableSpots}</div>
+            <Link to="/booking" className="text-sm text-spoton-secondary hover:underline mt-2 block">
+              Book a spot now →
             </Link>
-          </CardFooter>
+          </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">My Bookings</CardTitle>
-            <CardDescription>Your parking reservations</CardDescription>
+            <CardTitle className="text-lg">Active Booking</CardTitle>
+            <CardDescription>Your current active parking booking</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-spoton-secondary">
-              {myBookings.length}
-            </div>
+            {stats.activeBooking ? (
+              <div>
+                <p className="font-medium">{stats.activeBooking.spot}</p>
+                <p className="text-sm text-muted-foreground">
+                  {stats.activeBooking.date}, {stats.activeBooking.time}
+                </p>
+                <Link to="/active-booking" className="text-sm text-spoton-secondary hover:underline mt-2 block">
+                  View booking →
+                </Link>
+              </div>
+            ) : (
+              <div>
+                <p className="text-muted-foreground">No active booking</p>
+                <Link to="/booking" className="text-sm text-spoton-secondary hover:underline mt-2 block">
+                  Book a spot now →
+                </Link>
+              </div>
+            )}
           </CardContent>
-          <CardFooter>
-            <Link to="/my-bookings">
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          </CardFooter>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">User Type</CardTitle>
-            <CardDescription>Your access level</CardDescription>
+            <CardTitle className="text-lg">Quick Actions</CardTitle>
+            <CardDescription>Common parking tasks</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold capitalize text-gray-800">
-              {profile?.user_role || 'Standard'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Building Status */}
-      <h2 className="text-xl font-semibold mt-8">Building Status</h2>
-      <div className="grid gap-4 md:grid-cols-3">
-        {Object.entries(buildingStats).map(([building, stats]) => (
-          <Card key={building}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Building {building}</CardTitle>
-              <CardDescription>Current availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">
-                  {stats.available}
-                  <span className="text-base font-normal text-gray-500"> / {stats.total}</span>
-                </div>
-                <div 
-                  className={`rounded-full w-3 h-3 ${
-                    stats.available > 10 ? 'bg-spoton-accent animate-pulse' : 
-                    stats.available > 0 ? 'bg-yellow-400' : 'bg-spoton-booked'
-                  }`}
-                />
-              </div>
-              <div className="mt-2 h-2 rounded-full bg-gray-200">
-                <div 
-                  className={`h-2 rounded-full ${
-                    stats.available > 10 ? 'bg-spoton-accent' : 
-                    stats.available > 0 ? 'bg-yellow-400' : 'bg-spoton-booked'
-                  }`} 
-                  style={{ width: `${(stats.available / stats.total) * 100}%` }}
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Link to={`/booking?building=${building}`}>
-                <Button variant="outline" size="sm">Select</Button>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start">
+              <Link to="/booking" className="w-full text-left">
+                Book a Spot
               </Link>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      
-      {/* Upcoming Booking */}
-      <h2 className="text-xl font-semibold mt-8">Upcoming Booking</h2>
-      {upcomingBooking ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Next Parking</CardTitle>
-            <CardDescription>Details for your upcoming booking</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-spoton-primary" />
-                <span>{formatDate(upcomingBooking.date)}</span>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-spoton-primary" />
-                <span>Building {upcomingBooking.spot?.building?.code}, Spot {upcomingBooking.spot?.spot_number}</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-spoton-primary" />
-                <span>{upcomingBooking.start_time} - {upcomingBooking.end_time}</span>
-              </div>
-            </div>
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Link to="/my-bookings" className="w-full text-left">
+                View My Bookings
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start">
+              <Link to="/profile" className="w-full text-left">
+                Edit My Profile
+              </Link>
+            </Button>
           </CardContent>
-          <CardFooter>
-            <Link to="/my-bookings">
-              <Button variant="outline">Manage Booking</Button>
-            </Link>
-          </CardFooter>
         </Card>
-      ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-6">
-              <div className="flex justify-center mb-4">
-                <Calendar className="h-12 w-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">No Upcoming Bookings</h3>
-              <p className="text-gray-500 mb-4">You don't have any parking spots booked.</p>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Recent Bookings</h2>
+        {stats.recentBookings?.length > 0 ? (
+          <div className="space-y-3">
+            {stats.recentBookings.map((booking, index) => (
+              <Card key={index}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{booking.spot}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {booking.date}, {booking.time}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link to={`/booking/${booking.id}`}>
+                        <Button variant="outline" size="sm">View</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-muted-foreground">No recent bookings found</p>
               <Link to="/booking">
-                <Button>Book a Spot Now</Button>
+                <Button variant="link" className="mt-2">Book your first spot</Button>
               </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
 
 export default Dashboard;
-
-const Clock = ({ className }: { className?: string }) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="12" r="10"></circle>
-      <polyline points="12 6 12 12 16 14"></polyline>
-    </svg>
-  );
-};

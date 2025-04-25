@@ -10,7 +10,7 @@ const Index = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-spoton-primary">
             Spot<span className="text-spoton-secondary">On</span>
@@ -57,17 +57,19 @@ const Index = () => {
                   </Button>
                 </Link>
               ) : (
-                <Link to="/login">
-                  <Button size="lg" className="bg-white text-spoton-primary hover:bg-gray-100">
-                    Get Started
-                  </Button>
-                </Link>
+                <div className="flex gap-4">
+                  <Link to="/login">
+                    <Button size="lg" className="bg-white text-spoton-primary hover:bg-gray-100">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-spoton-primary">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
               )}
-              <Link to="#how-it-works">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                  Learn More
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -156,18 +158,34 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA with more prominent login/signup */}
       <section className="py-16 bg-spoton-primary text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to stop searching for parking?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join SpotOn today and make parking at Ajman University stress-free.
           </p>
-          <Link to={isAuthenticated ? "/dashboard" : "/login"}>
-            <Button size="lg" className="bg-white text-spoton-primary hover:bg-gray-100">
-              {isAuthenticated ? 'Go to Dashboard' : 'Get Started Now'}
-            </Button>
-          </Link>
+          
+          {isAuthenticated ? (
+            <Link to="/dashboard">
+              <Button size="lg" className="bg-white text-spoton-primary hover:bg-gray-100">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <div className="flex justify-center gap-4">
+              <Link to="/login">
+                <Button size="lg" className="bg-white text-spoton-primary hover:bg-gray-100">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-spoton-primary">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
