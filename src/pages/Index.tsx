@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,38 @@ const Index = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Navigation */}
+      <header className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-spoton-primary">
+            Spot<span className="text-spoton-secondary">On</span>
+          </h1>
+          <div className="space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="outline" size="sm">Dashboard</Button>
+                </Link>
+                <Link to="/profile">
+                  <Button variant="outline" size="sm">Profile</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" size="sm">Login</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="default" size="sm">Sign Up</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <header className="bg-gradient-to-r from-spoton-primary to-spoton-secondary text-white">
+      <div className="bg-gradient-to-r from-spoton-primary to-spoton-secondary text-white">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -42,7 +71,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* How It Works */}
       <section id="how-it-works" className="py-16 bg-white">

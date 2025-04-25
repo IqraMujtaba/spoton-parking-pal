@@ -10,7 +10,7 @@ import { User, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
-  const { user, profile, updateProfile, isAdmin } = useAuth();
+  const { user, profile, updateProfile, isAdmin, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: profile?.first_name || '',
@@ -130,9 +130,7 @@ const Profile = () => {
               <Button
                 variant="destructive"
                 className="w-full"
-                onClick={() => { 
-                  supabase.auth.signOut();
-                }}
+                onClick={logout}
               >
                 Sign Out
               </Button>

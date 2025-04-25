@@ -1,11 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '../../contexts/AuthContext';
+import { ParkingSpot, Building, User } from '@/lib/types';
+import { Calendar, User as UserIcon, Car } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { Button } from '@/components/ui/button';
-import { CalendarIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getAllBookings, getDashboardStats } from '@/services/supabaseService';
 import { BookingWithSpot } from '@/lib/types';
@@ -21,7 +21,8 @@ const AdminDashboard = () => {
   });
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>(undefined);
-  
+  const { user } = useAuth();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
