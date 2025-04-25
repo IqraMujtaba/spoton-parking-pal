@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import { toast } from 'sonner';
 import { User, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -130,8 +131,7 @@ const Profile = () => {
                 variant="destructive"
                 className="w-full"
                 onClick={() => { 
-                  const { auth } = supabase;
-                  auth.signOut();
+                  supabase.auth.signOut();
                 }}
               >
                 Sign Out
