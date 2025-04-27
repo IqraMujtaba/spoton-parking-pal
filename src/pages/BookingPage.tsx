@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { CalendarIcon, Clock, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { BuildingId, ParkingSpot } from '@/lib/types';
 import { toast } from 'sonner';
+import ParkingMap from '@/components/ParkingMap';
 import { 
   fetchBuildings, 
   fetchParkingSpots, 
