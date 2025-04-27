@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,11 +24,9 @@ const BookingPage = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Extract building from URL params if available
   const searchParams = new URLSearchParams(location.search);
   const initialBuilding = searchParams.get('building') as BuildingId | null;
   
-  // State variables
   const [buildings, setBuildings] = useState<any[]>([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingId | null>(initialBuilding || null);
@@ -40,14 +37,12 @@ const BookingPage = () => {
   const [selectedSpot, setSelectedSpot] = useState<ParkingSpot | null>(null);
   const [loading, setLoading] = useState(false);
   
-  // Get buildings on component mount
   useEffect(() => {
     const loadBuildings = async () => {
       try {
         const buildingsData = await fetchBuildings();
         setBuildings(buildingsData);
         
-        // If initialBuilding is set, find the corresponding building ID
         if (initialBuilding) {
           const building = buildingsData.find(b => b.code === initialBuilding);
           if (building) {
@@ -63,7 +58,6 @@ const BookingPage = () => {
     loadBuildings();
   }, [initialBuilding]);
   
-  // Generate time options
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 8; hour < 20; hour++) {
@@ -78,7 +72,6 @@ const BookingPage = () => {
   
   const timeOptions = generateTimeOptions();
   
-  // Update available spots when selection changes
   useEffect(() => {
     const updateAvailableSpots = async () => {
       if (selectedBuildingId && selectedDate) {
@@ -105,7 +98,6 @@ const BookingPage = () => {
     updateAvailableSpots();
   }, [selectedBuildingId, selectedDate, startTime, endTime]);
   
-  // Handle building selection
   const handleBuildingChange = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
     const selected = buildings.find(b => b.id === buildingId);
@@ -114,13 +106,11 @@ const BookingPage = () => {
     }
   };
   
-  // Handle spot selection
   const handleSpotClick = (spot: ParkingSpot) => {
     if (!spot.isAvailable) return;
     setSelectedSpot(spot);
   };
   
-  // Handle booking submission
   const handleBooking = async () => {
     if (!user || !selectedBuildingId || !selectedSpot) return;
     
@@ -155,7 +145,6 @@ const BookingPage = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Building Selection */}
             <div className="space-y-2">
               <Label>Building</Label>
               <Select 
@@ -175,7 +164,6 @@ const BookingPage = () => {
               </Select>
             </div>
 
-            {/* Date Selection */}
             <div className="space-y-2">
               <Label>Date</Label>
               <Popover>
@@ -200,14 +188,12 @@ const BookingPage = () => {
               </Popover>
             </div>
 
-            {/* Start Time Selection */}
             <div className="space-y-2">
               <Label>Start Time</Label>
               <Select 
                 value={startTime}
                 onValueChange={(value) => {
                   setStartTime(value);
-                  // Ensure end time is after start time
                   if (value >= endTime) {
                     const startIdx = timeOptions.findIndex(t => t === value);
                     if (startIdx < timeOptions.length - 1) {
@@ -227,7 +213,6 @@ const BookingPage = () => {
               </Select>
             </div>
 
-            {/* End Time Selection */}
             <div className="space-y-2">
               <Label>End Time</Label>
               <Select 
@@ -248,7 +233,6 @@ const BookingPage = () => {
             </div>
           </div>
           
-          {/* Summary of selection */}
           {selectedBuilding && (
             <div className="mt-6 p-4 bg-gray-50 rounded-md">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -270,7 +254,6 @@ const BookingPage = () => {
         </CardContent>
       </Card>
       
-      {/* Parking Map */}
       {selectedBuildingId && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Select a Parking Spot</h2>
@@ -283,9 +266,14 @@ const BookingPage = () => {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-5 gap-4 justify-center">
-                    {/* Legend */}
-                    <div className="col-span-5 flex items-center justify-center space-x-8 mb-4">
+                  <ParkingMap 
+                    spots={parkingSpots}
+                    selectedSpot={selectedSpot}
+                    onSpotClick={handleSpotClick}
+                  />
+                  
+                  <div className="mt-6">
+                    <div className="flex items-center justify-center space-x-8 mb-4">
                       <div className="flex items-center">
                         <div className="w-4 h-4 bg-spoton-accent rounded mr-2"></div>
                         <span className="text-sm">Available</span>
@@ -299,33 +287,8 @@ const BookingPage = () => {
                         <span className="text-sm">Selected</span>
                       </div>
                     </div>
-                    
-                    {/* Parking Spots */}
-                    {parkingSpots.length > 0 ? (
-                      parkingSpots.map((spot) => (
-                        <div
-                          key={spot.id}
-                          className={cn(
-                            "parking-spot aspect-square flex items-center justify-center rounded-md text-white font-semibold cursor-pointer",
-                            spot.isAvailable
-                              ? selectedSpot?.id === spot.id
-                                ? "bg-spoton-primary"
-                                : "bg-spoton-accent hover:bg-spoton-hover"
-                              : "bg-spoton-booked cursor-not-allowed opacity-70"
-                          )}
-                          onClick={() => handleSpotClick(spot)}
-                        >
-                          {spot.spot_number}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="col-span-5 text-center py-8 text-gray-500">
-                        No parking spots available. Please select a different building or time.
-                      </div>
-                    )}
                   </div>
                   
-                  {/* Booking Button */}
                   <div className="mt-8 flex justify-center">
                     <Button
                       size="lg"
